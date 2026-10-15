@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="status-time" id="clock_display2">--:--</div>
+
+    <div class="main-container">
+        <div id="screen_settings">
+            <div class="settings-header-bar">
+                <div class="settings-title-block">
+                    <h1>WB‑MRWM2 (2‑channel relay)</h1>
+                    <div class="settings-meta">
+                        slave_id=<code>{{ slave_id }}</code>,
+                        port=<code>{{ port }}</code>,
+                        {{ baudrate }} baud
+                    </div>
+                </div>
+                <button class="btn-back" onclick="window.location.href='/'">Назад</button>
+            </div>
+
+            <div class="settings-grid">
+                <!-- Канал 1 -->
+                <div class="set-card">
+                    <h2>Канал 1</h2>
+                    <div class="set-row">
+                        <div class="set-label-block">
+                            <div class="set-name">Реле</div>
+                            <div class="set-sub">Фактическое состояние</div>
+                        </div>
+                        <div id="relay1_state" class="pill">—</div>
+                    </div>
+                    <div class="set-row">
+                        <div class="set-label-block">
+                            <div class="set-name">Мощность</div>
+                            <div class="set-sub">Активная, Вт</div>
+                        </div>
+                        <div id="p1" class="pill">—</div>
+                    </div>
+                    <div class="set-row">
+                        <div class="set-label-block">
+                            <div class="set-name">Управление</div>
+                            <div class="set-sub">Вкл/Выкл</div>
+                        </div>
+                        <div class="set-controls">
+                            <button id="relay1_toggle" class="btn-relay on">ВКЛЮЧИТЬ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Канал 2 -->
+                <div class="set-card">
+                    <h2>Канал 2</h2>
+                    <div class="set-row">
+                        <div class="set-label-block">
+                            <div class="set-name">Реле</div>
+                            <div class="set-sub">Фактическое состояние</div>
+                        </div>
+                        <div id="relay2_state" class="pill">—</div>
+                    </div>
+                    <div class="set-row">
+                        <div class="set-label-block">
+                            <div class="set-name">Мощность</div>
+                            <div class="set-sub">Активная, Вт</div>
+                        </div>
+                        <div id="p2" class="pill">—</div>
+                    </div>
+                    <div class="set-row">
+                        <div class="set-label-block">
+                            <div class="set-name">Управление</div>
+                            <div class="set-sub">Вкл/Выкл</div>
+                        </div>
+                        <div class="set-controls">
+                            <button id="relay2_toggle" class="btn-relay on">ВКЛЮЧИТЬ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Связь -->
+                <div class="set-card full-width">
+                    <h2>Связь</h2>
+                    <div class="set-row">
+                        <div class="set-label-block">
+                            <div class="set-name">Статус</div>
+                            <div class="set-sub">Обновлено: <span id="updated">—</span></div>
+                        </div>
+                        <div id="conn" class="pill">Ожидание...</div>
+                    </div>
+                    <div class="set-row">
+                        <div class="set-label-block">
+                            <div class="set-name">Ошибка</div>
+                            <div class="set-sub">последняя</div>
+                        </div>
+                        <div id="err" class="pill">Поиск модуля...</div>
+                    </div>
+                    <div class="set-row">
+                        <div class="set-label-block">
+                            <div class="set-name">Геркон (Вход 1)</div>
+                            <div class="set-sub">Датчик замка / двери</div>
+                        </div>
+                        <div id="reed_state_pill" class="pill">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

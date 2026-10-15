@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer Nekit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="status-time" id="clock_display">--:--</div>
+
+    <div class="main-container">
+        
+        <div id="screen_setup">
+            <div class="top-actions">
+                <button id="btn_settings" class="btn-action" onclick="openPasswordModal()">Настройки</button>
+                <button id="btn_history" class="btn-action" onclick="openHistoryModal()">История</button>
+                <div class="sensor-badge" id="lock_widget" onclick="toggleSimReed()" title="Статус геркона (нажмите для проверки)">
+                    <div class="lock-icon-wrap closed" id="lock_icon_wrap"></div>
+                    <div class="lock-info">
+                        <div class="lock-title closed" id="lock_title">Замок закрыт</div>
+                        <div class="lock-sub" id="lock_sub">Датчик замкнут</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="left-panel">
+                <div>
+                    <h2>Укажите время</h2>
+                    <div class="presets-column">
+                        <button class="preset-btn active" data-min="20">20 минут</button>
+                        <button class="preset-btn" data-min="40">40 минут</button>
+                        <button class="preset-btn" data-min="60">60 минут</button>
+                        <button id="btn_full_charge" class="preset-btn btn-orange" data-min="60">До полной зарядки</button>
+                        <button id="btn_custom_time_open" class="preset-btn btn-orange">Указать своё</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-start" onclick="askToStart()">Начать</button>
+        </div>
+
+        <div id="screen_active" class="hidden">
+            <div class="status-card">
+                <canvas id="waterCanvas"></canvas>
+                
+                <!-- Во время зарядки этот блок будет пустым, вода на первом плане! -->
+                <div class="status-main-text" id="status_text_normal"></div>
+                
+                <div class="status-error-block hidden" id="status_text_error">
+                    <div class="error-exclamation">!</div>
+                    <div class="error-label">ERROR</div>
+                </div>
+
+                <button class="btn-stop" onclick="askToStop()">Остановить</button>
+            </div>
+
+            <div class="timer-card">
+                <div class="timer-label">Осталось</div>
+                <div class="timer-value-large" id="timer_countdown">--:--</div>
+                
+                <div class="timer-label">Закончится в</div>
+                <div class="timer-value-medium" id="timer_ends_at">--:--</div>
+
+                <div class="timer-label timer-power-label">Мощность по каналам</div>
+                <div class="channels-power-card">
+                    <div class="ch-power-item">
+                        <div class="ch-power-title">Канал 1</div>
+                        <div class="ch-power-value" id="power_ch1">0.0 Вт</div>
+                    </div>
+                    <div class="ch-power-divider"></div>
+                    <div class="ch-power-item">
+                        <div class="ch-power-title">Канал 2</div>
+                        <div class="ch-power-value" id="power_ch2">0.0 Вт</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалки -->
+    <div class="modal-overlay" id="modal_history">
+        <div class="modal-box" style="width: 380px;">
+            <button class="finish-close-btn" onclick="closeModal('modal_history')">&#10006;</button>
+            <h3 class="modal-title">История</h3>
+            
+            <div class="history-list" id="history_list_container" style="margin-bottom: 25px;">
+                <!-- Загружается динамически из history.json -->
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-modal btn-cancel" style="width: 100%" onclick="closeModal('modal_history')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal_schedule">
+        <div class="modal-box" style="width: 380px;">
+            <button class="finish-close-btn" onclick="closeModal('modal_schedule')">&#10006;</button>
+            <h3 class="modal-title">Таймер запуска</h3>
+            
+            <div>
+                <div class="sched-row">
+                    <span class="sched-label">Начать в:</span>
+                    <input type="text" id="sched_start" class="sched-input" placeholder="00:00" readonly>
+                </div>
+                <div class="sched-row">
+                    <span class="sched-label">Длительность:</span>
+                    <input type="text" id="sched_duration" class="sched-input" placeholder="мин" readonly>
+                </div>
+                <div class="sched-row">
+                    <span class="sched-label">Окончание:</span>
+                    <input type="text" id="sched_end" class="sched-input" placeholder="00:00" readonly>
+                </div>
+            </div>
+
+            <div class="numpad" style="margin-bottom: 25px; margin-top: 20px;">
+                <button class="num-btn" onclick="pressSchedNum('1')">1</button>
+                <button class="num-btn" onclick="pressSchedNum('2')">2</button>
+                <button class="num-btn" onclick="pressSchedNum('3')">3</button>
+                <button class="num-btn" onclick="pressSchedNum('4')">4</button>
+                <button class="num-btn" onclick="pressSchedNum('5')">5</button>
+                <button class="num-btn" onclick="pressSchedNum('6')">6</button>
+                <button class="num-btn" onclick="pressSchedNum('7')">7</button>
+                <button class="num-btn" onclick="pressSchedNum('8')">8</button>
+                <button class="num-btn" onclick="pressSchedNum('9')">9</button>
+                <button class="num-btn zero" onclick="pressSchedNum('0')">0</button>
+                <button class="num-btn backspace" onclick="pressSchedBackspace()">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M21 4H8l-7 8 7 8h13c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-2.5 11.5L17 17l-3.5-3.5L10 17l-1.5-1.5 3.5-3.5-3.5-3.5L10 7l3.5 3.5L17 7l1.5 1.5-3.5 3.5 3.5 3.5z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-modal btn-confirm" style="width: 100%" onclick="applySchedule()">Применить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal_custom_time">
+        <div class="modal-box" style="width: 380px;">
+            <button class="finish-close-btn" onclick="closeModal('modal_custom_time')">&#10006;</button>
+            <h3 class="modal-title">Своё время</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <div class="sched-row" style="cursor: pointer;" onclick="setActiveCustomInput('duration')">
+                    <span class="sched-label">Длительность:</span>
+                    <input type="text" id="custom_duration" class="sched-input active-input" placeholder="мин" readonly>
+                </div>
+                <div class="sched-row" style="cursor: pointer;" onclick="setActiveCustomInput('endtime')">
+                    <span class="sched-label">Закончить в:</span>
+                    <input type="text" id="custom_endtime" class="sched-input" placeholder="00:00" readonly>
+                </div>
+            </div>
+
+            <div class="numpad" style="margin-bottom: 25px;">
+                <button class="num-btn" onclick="pressCustomNum('1')">1</button>
+                <button class="num-btn" onclick="pressCustomNum('2')">2</button>
+                <button class="num-btn" onclick="pressCustomNum('3')">3</button>
+                <button class="num-btn" onclick="pressCustomNum('4')">4</button>
+                <button class="num-btn" onclick="pressCustomNum('5')">5</button>
+                <button class="num-btn" onclick="pressCustomNum('6')">6</button>
+                <button class="num-btn" onclick="pressCustomNum('7')">7</button>
+                <button class="num-btn" onclick="pressCustomNum('8')">8</button>
+                <button class="num-btn" onclick="pressCustomNum('9')">9</button>
+                <button class="num-btn zero" onclick="pressCustomNum('0')">0</button>
+                <button class="num-btn backspace" onclick="pressCustomBackspace()">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M21 4H8l-7 8 7 8h13c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-2.5 11.5L17 17l-3.5-3.5L10 17l-1.5-1.5 3.5-3.5-3.5-3.5L10 7l3.5 3.5L17 7l1.5 1.5-3.5 3.5 3.5 3.5z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-modal btn-confirm" style="width: 100%" onclick="applyCustomTime()">Применить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal_confirm">
+        <div class="modal-box">
+            <div id="modal_confirm_error_icon" class="modal-error-exclamation hidden">!</div>
+            <h3 class="modal-title" id="modal_confirm_text">Вы уверены?</h3>
+            <div id="modal_confirm_error_msg" class="modal-error-subtext hidden"></div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-cancel" onclick="closeModal('modal_confirm')">Нет</button>
+                <button id="btn_confirm_yes" class="btn-modal btn-confirm">Да</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal_finish">
+        <div class="modal-box">
+            <button class="finish-close-btn" onclick="closeFinishModal()">&#10006;</button>
+            <svg class="finish-icon" viewBox="0 0 24 24">
+                <path d="M22 5.72l-4.6-3.86-1.29 1.53 4.6 3.86L22 5.72zM7.88 3.39L6.6 1.86 2 5.71l1.29 1.53 4.59-3.85zM12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+            </svg>
+            <h3 class="modal-title" style="margin-bottom: 0;">Зарядка завершена</h3>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal_password">
+        <div class="modal-box" style="width: 350px;">
+            <button class="finish-close-btn" onclick="closeModal('modal_password')">&#10006;</button>
+            <h3 class="modal-title">Введите пароль</h3>
+            
+            <div class="input-row pwd-input-wrapper">
+                <input type="password" class="pwd-input" id="pwd_input" placeholder="Пароль" readonly>
+                <button class="btn-backspace" onclick="pressPwdBackspace()">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M21 4H8l-7 8 7 8h13c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-2.5 11.5L17 17l-3.5-3.5L10 17l-1.5-1.5 3.5-3.5-3.5-3.5L10 7l3.5 3.5L17 7l1.5 1.5-3.5 3.5 3.5 3.5z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="numpad" style="margin-bottom: 25px;">
+                <button class="num-btn" onclick="pressPwdNum('1')">1</button>
+                <button class="num-btn" onclick="pressPwdNum('2')">2</button>
+                <button class="num-btn" onclick="pressPwdNum('3')">3</button>
+                <button class="num-btn" onclick="pressPwdNum('4')">4</button>
+                <button class="num-btn" onclick="pressPwdNum('5')">5</button>
+                <button class="num-btn" onclick="pressPwdNum('6')">6</button>
+                <button class="num-btn" onclick="pressPwdNum('7')">7</button>
+                <button class="num-btn" onclick="pressPwdNum('8')">8</button>
+                <button class="num-btn" onclick="pressPwdNum('9')">9</button>
+                <button class="num-btn zero" onclick="pressPwdNum('0')">0</button>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-modal btn-confirm" style="width: 100%;" onclick="checkPassword()">Войти</button>
+            </div>
+            <div id="pwd_error" style="color: var(--c-btn-red); margin-top: 15px; font-size: 14px; font-weight: 700; display: none;">Неверный пароль!</div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
